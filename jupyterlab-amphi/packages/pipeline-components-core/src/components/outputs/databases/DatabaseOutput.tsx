@@ -5,6 +5,7 @@ import { PostgresOutput } from './PostgresOutput';
 import { SqlServerOutput } from './SqlServerOutput';
 import { SnowflakeOutput } from './SnowflakeOutput';
 import { OracleOutput } from './OracleOutput';
+import { HFSQLOutput } from './HFSQLOutput';
 
 export class DatabaseOutput extends BaseCoreComponent {
   constructor() {
@@ -12,7 +13,8 @@ export class DatabaseOutput extends BaseCoreComponent {
 		tsCFselectProvider: "postgres",
         tsCFinputHost: "localhost",
         tsCFradioIfTableExists: "fail",
-        tsCFradioMode: "insert"		
+        tsCFradioMode: "insert",
+        tsCFselectHFSQLMode: "client_server"
 		};
 
     const mysql = new MySQLOutput();
@@ -20,6 +22,7 @@ export class DatabaseOutput extends BaseCoreComponent {
     const mssql = new SqlServerOutput();
     const snowflake = new SnowflakeOutput();
     const oracle = new OracleOutput();
+    const hfsql = new HFSQLOutput();
 
     const getFields = (comp: BaseCoreComponent): any[] => {
       const form = (comp as any)._form as any;
@@ -41,7 +44,8 @@ export class DatabaseOutput extends BaseCoreComponent {
             { value: "postgres", label: "PostgreSQL" },
             { value: "sqlserver", label: "SQL Server" },
             { value: "snowflake", label: "Snowflake" },
-            { value: "oracle", label: "Oracle" }
+            { value: "oracle", label: "Oracle" },
+            { value: "hfsql", label: "HFSQL" }
           ]
         },
         ...wrapFields(getFields(mysql), "mysql"),
@@ -49,6 +53,7 @@ export class DatabaseOutput extends BaseCoreComponent {
         ...wrapFields(getFields(mssql), "sqlserver"),
         ...wrapFields(getFields(snowflake), "snowflake"),
         ...wrapFields(getFields(oracle), "oracle"),
+        ...wrapFields(getFields(hfsql), "hfsql"),
       ]
     };
 
@@ -65,6 +70,7 @@ export class DatabaseOutput extends BaseCoreComponent {
       case "sqlserver": return new SqlServerOutput().provideDependencies({ config });
       case "snowflake": return new SnowflakeOutput().provideDependencies({ config });
       case "oracle": return new OracleOutput().provideDependencies({ config });
+      case "hfsql": return new HFSQLOutput().provideDependencies({ config });
       default: return [];
     }
   }
@@ -86,10 +92,18 @@ export class DatabaseOutput extends BaseCoreComponent {
       config.tsCFselectProvider === "sqlserver" ? new SqlServerOutput().provideImports({ config }) :
       config.tsCFselectProvider === "snowflake" ? new SnowflakeOutput().provideImports({ config }) :
       config.tsCFselectProvider === "oracle" ? new OracleOutput().provideImports({ config }) :
+      config.tsCFselectProvider === "hfsql" ? new HFSQLOutput().provideImports({ config }) :
       [];
 
     const seen = new Set<string>();
     return imports.filter(i => (seen.has(i) ? false : (seen.add(i), true)));
+  }
+
+  public provideFunctions({ config }): string[] {
+    if (config.tsCFselectProvider === "hfsql") {
+      return new HFSQLOutput().provideFunctions({ config });
+    }
+    return [];
   }
 
   public generateComponentCode({ config, inputName }): string {
@@ -99,6 +113,7 @@ export class DatabaseOutput extends BaseCoreComponent {
       case "sqlserver": return new SqlServerOutput().generateComponentCode({ config, inputName });
       case "snowflake": return new SnowflakeOutput().generateComponentCode({ config, inputName });
       case "oracle": return new OracleOutput().generateComponentCode({ config, inputName });
+      case "hfsql": return new HFSQLOutput().generateComponentCode({ config, inputName });
       default: return "";
     }
   }

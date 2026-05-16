@@ -5,6 +5,7 @@ import { PostgresInput } from './PostgresInput';
 import { ODBCInput } from './ODBCInput';
 import { SqlServerInput } from './SqlServerInput';
 import { SnowflakeInput } from './SnowflakeInput';
+import { HFSQLInput } from './HFSQLInput';
 
 export class DatabaseInput extends BaseCoreComponent {
   constructor() {
@@ -15,7 +16,8 @@ export class DatabaseInput extends BaseCoreComponent {
         tsCFselectODBCConnectionMethod : "dsn",			
         tsCFinputODBCConnectionString: "",
         tsCFinputDSN: "",
-        tsCFbooleanAutoCommit: true
+        tsCFbooleanAutoCommit: true,
+        tsCFselectHFSQLMode: "client_server"
 		};
 
     const mysql = new MySQLInput();
@@ -23,6 +25,7 @@ export class DatabaseInput extends BaseCoreComponent {
     const odbc = new ODBCInput();
     const mssql = new SqlServerInput();
     const snowflake = new SnowflakeInput();
+    const hfsql = new HFSQLInput();
 
     const getFields = (comp: BaseCoreComponent): any[] => {
       const form = (comp as any)._form as any;
@@ -45,6 +48,7 @@ export class DatabaseInput extends BaseCoreComponent {
             { value: "sqlserver", label: "SQL Server" },
             { value: "snowflake", label: "Snowflake" },
             { value: "odbc", label: "ODBC" },
+            { value: "hfsql", label: "HFSQL" },
           ]
         },
         ...wrapFields(getFields(mysql), "mysql"),
@@ -52,6 +56,7 @@ export class DatabaseInput extends BaseCoreComponent {
         ...wrapFields(getFields(mssql), "sqlserver"),
         ...wrapFields(getFields(odbc), "odbc"),
         ...wrapFields(getFields(snowflake), "snowflake"),
+        ...wrapFields(getFields(hfsql), "hfsql"),
       ]
     };
 
@@ -68,6 +73,7 @@ export class DatabaseInput extends BaseCoreComponent {
       case "sqlserver": return new SqlServerInput().provideDependencies({ config });
       case "odbc": return new ODBCInput().provideDependencies({ config });
       case "snowflake": return new SnowflakeInput().provideDependencies({ config });
+      case "hfsql": return new HFSQLInput().provideDependencies({ config });
       default: return [];
     }
   }
@@ -79,6 +85,7 @@ export class DatabaseInput extends BaseCoreComponent {
       config.tsCFselectProvider === "sqlserver" ? new SqlServerInput().provideImports({ config }) :
       config.tsCFselectProvider === "odbc" ? new ODBCInput().provideImports({ config }) :
       config.tsCFselectProvider === "snowflake" ? new SnowflakeInput().provideImports({ config }) :
+      config.tsCFselectProvider === "hfsql" ? new HFSQLInput().provideImports({ config }) :
       [];
 
     const seen = new Set<string>();
@@ -99,6 +106,9 @@ export class DatabaseInput extends BaseCoreComponent {
     if (config.tsCFselectProvider === "odbc" && typeof (ODBCInput as any).prototype.provideFunctions === 'function') {
       return new ODBCInput().provideFunctions({ config });
     }
+    if (config.tsCFselectProvider === "hfsql") {
+      return new HFSQLInput().provideFunctions({ config });
+    }
     return [];
   }
   
@@ -109,6 +119,7 @@ export class DatabaseInput extends BaseCoreComponent {
       case "sqlserver": return new SqlServerInput().generateComponentCode({ config, outputName });
       case "odbc": return new ODBCInput().generateComponentCode({ config, outputName });
       case "snowflake": return new SnowflakeInput().generateComponentCode({ config, outputName });
+      case "hfsql": return new HFSQLInput().generateComponentCode({ config, outputName });
       default: return "";
     }
   }
